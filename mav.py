@@ -1,10 +1,16 @@
 from pymavlink import mavutil
 from time import sleep
 import cv2
+import numpy
 from pyzbar.pyzbar import decode
 from PIL import Image
 
-cap = cv2.VideoCapture(-1)
+cap = cv2.VideoCapture(0)
+if cap.isOpened() == 0:
+    exit(-1)
+
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2560)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 def arm_vehicle():
     master.mav.command_long_send(
@@ -35,30 +41,28 @@ def vehicle_mode(input_mode):
         mode_id)
     
 
-master = mavutil.mavlink_connection("/dev/serial0", baud=921600)
+master = mavutil.mavlink_connection("/dev/ttyACM0", baud=921600)
 print(master)
 
 master.wait_heartbeat()
 
-vehicle_mode('POSHOLD')
+vehicle_mode('STABILIZE')
 
 arm_vehicle()
 
-while(True):
+while True:
+    retval, frame = cap.read()
+    left_right_image = numpy.split(frame, 2, axis=1)
+    """cv2.imshow("frame", frame)
+    cv2.imshow("right", left_right_image[0])"""
+    cv2.imshow("left", left_right_image[1])
     
-    ret, frame = cap.read()
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    cv2.imshow("no", gray)
-    
-    if decode(frame) != []:
-        print(decode(frame)[0].rect[1])
+    if decode(left_right_image[1]) != []:
+        print(decode(left_right_image[1])[0].rect[1])
         vehicle_mode('LAND')
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 
-sleep(10)
-vehicle_mode('LAND')
-
-
-
+"""sleep(10)
+vehicle_mode('LAND')"""
