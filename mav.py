@@ -86,7 +86,8 @@ while True:
     blue_mask = cv2.dilate(blue_mask, kernal)
     res_blue = cv2.bitwise_and(imageFrame, imageFrame,
                                mask = blue_mask)
-   
+    val = 0
+    thresh = 5
     contours, hierarchy = cv2.findContours(red_mask,
                                            cv2.RETR_TREE,
                                            cv2.CHAIN_APPROX_SIMPLE)
@@ -95,6 +96,7 @@ while True:
         area = cv2.contourArea(contour)
         if(area > 300):
             x, y, w, h = cv2.boundingRect(contour)
+            val = w + h
             imageFrame = cv2.rectangle(imageFrame, (x, y), 
                                        (x + w, y + h), 
                                        (0, 0, 255), 2)
@@ -120,7 +122,7 @@ while True:
     cv2.imshow("right", left_right_image[0])"""
     cv2.imshow("left", left_right_image[1])
     
-    if decode(left_right_image[1]) != []:
+    if decode(left_right_image[1]) != [] and val > thresh:
         print(decode(left_right_image[1])[0].rect[1])
         vehicle_mode('LAND')
     if cv2.waitKey(1) & 0xFF == ord('q'):
